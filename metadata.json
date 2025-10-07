@@ -1,0 +1,5 @@
+{
+  "name": "AI Animation Sequence Enhancer",
+  "description": "Automate the upscaling of old animations. Select a portion of your video, and the AI will enhance it frame-by-frame. Download the resulting image sequence to assemble your high-quality video.",
+  "requestFramePermissions": []
+}
