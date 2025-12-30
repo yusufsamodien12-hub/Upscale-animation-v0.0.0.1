@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 
 interface EnhancementControlsProps {
   duration: number;
-  onStart: (startTime: number, endTime: number, fps: number, useSmartEnhancement: boolean) => void;
+  onStart: (startTime: number, endTime: number, fps: number, useSmartEnhancement: boolean, engine: 'ai' | 'local', theme?: string) => void;
 }
 
 export const EnhancementControls: React.FC<EnhancementControlsProps> = ({ duration, onStart }) => {
@@ -10,6 +10,8 @@ export const EnhancementControls: React.FC<EnhancementControlsProps> = ({ durati
   const [endTime, setEndTime] = useState(Math.min(duration, 5)); // Default to 5s or less
   const [fps, setFps] = useState(24);
   const [useSmartEnhancement, setUseSmartEnhancement] = useState(false);
+  const [engine, setEngine] = useState<'ai' | 'local'>('ai');
+  const [theme, setTheme] = useState<string>('none');
 
   const totalFrames = useMemo(() => {
     if (endTime > startTime && fps > 0) {
@@ -19,7 +21,7 @@ export const EnhancementControls: React.FC<EnhancementControlsProps> = ({ durati
   }, [startTime, endTime, fps]);
 
   const handleStartClick = () => {
-    onStart(startTime, endTime, fps, useSmartEnhancement);
+    onStart(startTime, endTime, fps, useSmartEnhancement, engine, theme);
   };
 
   return (
@@ -90,6 +92,42 @@ export const EnhancementControls: React.FC<EnhancementControlsProps> = ({ durati
             Uses a second AI to analyze each frame for better context. (Slower, higher quality)
           </p>
         </div>
+      </div>
+
+      <div className="relative flex items-start justify-center">
+        <div className="w-full">
+          <label htmlFor="engine" className="block text-sm font-medium text-gray-300 mb-1">Enhancement Engine</label>
+          <select
+            id="engine"
+            value={engine}
+            onChange={(e) => setEngine(e.target.value as 'ai' | 'local')}
+            className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="ai">AI (Gemini)</option>
+            <option value="local">Local (Not AI)</option>
+          </select>
+          <p className="text-gray-400 text-xs mt-1">Local uses a browser-based upscaler and sharpening (faster, no external API).</p>
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="theme" className="block text-sm font-medium text-gray-300 mb-1">Local Enhancer Theme</label>
+        <select
+          id="theme"
+          value={theme}
+          onChange={(e) => setTheme(e.target.value)}
+          className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-indigo-500 focus:border-indigo-500"
+        >
+          <option value="none">None (Default)</option>
+          <option value="vivid">Vivid</option>
+          <option value="cinematic">Cinematic</option>
+          <option value="sepia">Sepia</option>
+          <option value="grayscale">Grayscale</option>
+          <option value="warm">Warm</option>
+          <option value="cool">Cool</option>
+          <option value="high-contrast">High Contrast</option>
+        </select>
+        <p className="text-gray-400 text-xs mt-1">Applies a visual theme when using the Local (Not AI) enhancer.</p>
       </div>
 
       <div className="bg-gray-800 p-4 rounded-md text-center">

@@ -38,13 +38,16 @@ export const ResultsGallery: React.FC<ResultsGalleryProps> = ({ frames, isComple
         <div className="bg-green-900/50 border border-green-700 text-green-200 p-4 rounded-lg mb-6 text-center">
           <h4 className="font-bold text-lg">Processing Complete!</h4>
           <p className="mt-2">{successfulFramesCount} of {totalFrames} frames were enhanced successfully.</p>
-          <button
-            onClick={onDownloadZip}
+          <div className="flex justify-center gap-3">
+            <button
+              onClick={onDownloadZip}
             disabled={isZipping || successfulFramesCount === 0}
             className="mt-4 inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300"
           >
             {isZipping ? 'Zipping...' : `📦 Download ${successfulFramesCount} Frames as .ZIP`}
           </button>
+          {/* Video creation UI removed — user requested no in-browser video compilation */}
+          </div>
         </div>
       )}
 

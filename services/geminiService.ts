@@ -153,3 +153,111 @@ export const generateVideoWithVeo = async (frameBase64: string, prompt: string):
         throw new Error(`Failed to generate video with Veo. Reason: ${errorMessage}`);
     }
 };
+
+/**
+ * A simple, non-AI local enhancer that upscales an image by 2x and applies
+ * a mild unsharp mask using canvas operations. Runs entirely in the browser
+ * and returns a base64-encoded JPEG (no data URL prefix).
+ */
+export const enhanceFrameNonAI = async (frameBase64: string, options?: { theme?: string }): Promise<string> => {
+    const theme = options?.theme || 'none';
+    return new Promise((resolve, reject) => {
+        try {
+            const img = new Image();
+            img.onload = () => {
+                try {
+                    const srcW = img.width;
+                    const srcH = img.height;
+
+                    const dstW = srcW * 2;
+                    const dstH = srcH * 2;
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = dstW;
+                    canvas.height = dstH;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) return reject(new Error('Could not get canvas context.'));
+
+                    // Draw the image scaled up using high quality settings
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, dstW, dstH);
+
+                    // Apply a theme filter by redrawing into a filtered canvas
+                    const filteredCanvas = document.createElement('canvas');
+                    filteredCanvas.width = dstW;
+                    filteredCanvas.height = dstH;
+                    const fctx = filteredCanvas.getContext('2d');
+                    if (!fctx) return reject(new Error('Could not get filtered canvas context.'));
+
+                    // Map simple theme names to CSS filter strings
+                    let cssFilter = 'none';
+                    switch (theme) {
+                        case 'vivid': cssFilter = 'saturate(1.25) contrast(1.08)'; break;
+                        case 'cinematic': cssFilter = 'contrast(1.12) saturate(0.96)'; break;
+                        case 'sepia': cssFilter = 'sepia(0.5) saturate(1.05)'; break;
+                        case 'grayscale': cssFilter = 'grayscale(1) contrast(1.02)'; break;
+                        case 'warm': cssFilter = 'brightness(1.02) saturate(1.06)'; break;
+                        case 'cool': cssFilter = 'brightness(0.98) saturate(0.95)'; break;
+                        case 'high-contrast': cssFilter = 'contrast(1.18) saturate(1.05)'; break;
+                        default: cssFilter = 'none';
+                    }
+
+                    fctx.filter = cssFilter;
+                    fctx.drawImage(canvas, 0, 0);
+
+                    // Add small warm/cool overlays where appropriate
+                    if (theme === 'warm') {
+                        fctx.globalCompositeOperation = 'soft-light';
+                        fctx.fillStyle = 'rgba(255, 160, 80, 0.03)';
+                        fctx.fillRect(0, 0, dstW, dstH);
+                        fctx.globalCompositeOperation = 'source-over';
+                    } else if (theme === 'cool') {
+                        fctx.globalCompositeOperation = 'soft-light';
+                        fctx.fillStyle = 'rgba(80, 160, 255, 0.03)';
+                        fctx.fillRect(0, 0, dstW, dstH);
+                        fctx.globalCompositeOperation = 'source-over';
+                    }
+
+                    // Mild unsharp mask: blur and blend on the filtered canvas
+                    const original = fctx.getImageData(0, 0, dstW, dstH);
+
+                    // Create a blurred copy using a second canvas
+                    const blurCanvas = document.createElement('canvas');
+                    blurCanvas.width = dstW;
+                    blurCanvas.height = dstH;
+                    const bctx = blurCanvas.getContext('2d');
+                    if (!bctx) return reject(new Error('Could not get blur canvas context.'));
+                    bctx.filter = 'blur(1.2px)';
+                    bctx.drawImage(filteredCanvas, 0, 0);
+                    const blurred = bctx.getImageData(0, 0, dstW, dstH);
+
+                    // Apply unsharp by adding a fraction of (original - blurred) back to original
+                    const amount = 0.6; // Strength
+                    for (let i = 0; i < original.data.length; i += 4) {
+                        for (let c = 0; c < 3; c++) {
+                            const origVal = original.data[i + c];
+                            const blurVal = blurred.data[i + c];
+                            let v = origVal + amount * (origVal - blurVal);
+                            v = Math.max(0, Math.min(255, v));
+                            original.data[i + c] = v;
+                        }
+                        // Preserve alpha
+                    }
+
+                    fctx.putImageData(original, 0, 0);
+
+                    const dataUrl = filteredCanvas.toDataURL('image/jpeg', 0.92);
+                    const base64 = dataUrl.split(',')[1];
+                    resolve(base64);
+                } catch (err) {
+                    reject(err instanceof Error ? err : new Error('Enhancement failed'));
+                }
+            };
+            img.onerror = (e) => reject(new Error('Failed to load image for local enhancement'));
+            img.src = `data:image/jpeg;base64,${frameBase64}`;
+        } catch (err) {
+            reject(err instanceof Error ? err : new Error('Unexpected error in local enhancer'));
+        }
+    });
+};
