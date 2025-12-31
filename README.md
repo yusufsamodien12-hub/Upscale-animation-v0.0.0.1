@@ -1,6 +1,6 @@
 # Upscale Animation
 
-A small web app to extract frames from videos, apply an offline (non‑AI) enhancement pipeline with theme presets, and download results. Built with React + TypeScript + Vite.Page previwe https://yusufsamodien12-hub.github.io/Upscale-animation-v0.0.0.1/
+A small web app to extract frames from videos, apply an offline (non‑AI) enhancement pipeline with theme presets, and download results. Built with React + TypeScript + Vite.(Page previwe https://yusufsamodien12-hub.github.io/Upscale-animation-v0.0.0.1/)
 
 ## Features
 - Two‑phase processing: extract frames, then enhance them.
